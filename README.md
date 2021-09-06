@@ -20,11 +20,11 @@
 </p>
 
 
-## Declaimed
+## Disclaimer
 * Currently work in progress.
 * It is a learning based project to grab knowledges.
 
-*but usable by brave souls who don't mind some API instability between updates*
+*but usable by brave souls who don't mind some API instability between updates, Use at your own risk*
 
 ## License
 [MIT](./LICENSE)
