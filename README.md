@@ -1,13 +1,13 @@
 <p align="center">
-  <img width="256" src="https://user-images.githubusercontent.com/58973699/132199329-0d4df696-8459-4a82-b4f9-6552e94fde9a.png">  
+  <img width="800" src="https://user-images.githubusercontent.com/58973699/145937515-c8438450-4aa8-4653-88bf-f0a5e91e163d.png">  
 </p>
 
 <p align="center">
   <a href="LICENSE.md" target="_blank">
     <img src="https://badgen.net/badge/license/MIT/blue" alt="">
   </a>
-  <a href="https://github.com/hnimminh/fwgod/releases" target="_blank">
-    <img src="https://badgen.net/github/tag/hnimminh/fwgod" alt="">
+  <a href="https://github.com/hnimminh/shield/releases" target="_blank">
+    <img src="https://badgen.net/github/tag/hnimminh/shield" alt="">
   </a>
 </p>
 
