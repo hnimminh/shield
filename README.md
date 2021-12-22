@@ -13,7 +13,7 @@
 
 <p align="center">
   <br>
-  <strong>Firewall Go Daemon</strong>
+  <strong>Firewall Controller Daemon</strong>
   <br>
   <code>Battle Proven Firewall controlled by REST API & PUBSUB implementation with Go</code>
   <br><br>
@@ -21,10 +21,7 @@
 
 
 ## Disclaimer
-* Currently work in progress.
-* It is a learning based project to grab knowledges.
-
-*but usable by brave souls who don't mind some API instability between updates, Use at your own risk*
-
+* It is an experiental based project for a proof of work, *but usable by brave souls who don't mind some unstable API between updates*
+* It is not finished yet, and the work is still in progress.
 ## License
 [MIT](./LICENSE)
