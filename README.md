@@ -15,7 +15,7 @@
   <br>
   <strong>Firewall Controller Daemon</strong>
   <br>
-  <code>Battle Proven Firewall controlled by REST API & PUBSUB implementation with Go</code>
+  <code>Simple Daemon implementation with Go, receiving REST API & PUBSUB firewall config command and execution. </code>
   <br><br>
 </p>
 
