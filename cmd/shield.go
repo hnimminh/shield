@@ -13,15 +13,17 @@ import (
 	"github.com/hnimminh/shield/blueprint"
 	"github.com/hnimminh/shield/config"
 	"github.com/hnimminh/shield/versions"
+	"github.com/hnimminh/shield/web"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
 )
 
 var (
-	host    string
-	port    int
-	debug   bool
-	crdburl string
+	host     string
+	port     int
+	nohttp   bool
+	redisurl string
+	debug    bool
 )
 
 func init() {
@@ -47,8 +49,9 @@ func init() {
 	flag.StringVar(&host, "H", "", "HTTP API binding IP address")
 	flag.IntVar(&port, "port", 0, "HTTP API binding port")
 	flag.IntVar(&port, "P", 0, "HTTP API binding port")
-	flag.StringVar(&crdburl, "cfg-rdb-url", "", "configuation-redis database address, eg: tcp://username:password@10.10.10.10:6379/0")
-	flag.StringVar(&crdburl, "c", "", "configuation-redis database address, eg: tcp://username:password@10.10.10.10:6379/0")
+	flag.BoolVar(&nohttp, "nohttp", false, "Disable HTTP server")
+	flag.StringVar(&redisurl, "redisurl", "", "redis url, eg: tcp://username:password@10.10.10.10:6379/0")
+	flag.StringVar(&redisurl, "r", "", "redis url, eg: tcp://username:password@10.10.10.10:6379/0")
 	flag.BoolVar(&debug, "debug", false, "sets log level to debug")
 	flag.BoolVar(&debug, "d", false, "sets log level to debug")
 	flag.Parse()
@@ -89,12 +92,12 @@ func init() {
 		Password: config.CfgRedisPassword,
 		DB:       config.CfgRedisDb,
 	}
-	if crdburl != "" {
-		u, err := url.Parse(crdburl)
+	if redisurl != "" {
+		u, err := url.Parse(redisurl)
 		if err != nil {
-			zlog.Error().Err(err).Str("function", "HmAgent:Main:Validatevar").Msg("Fail to parse cfg-rdb-url")
+			zlog.Error().Err(err).Str("function", "Shield:Main:Validatevar").Msg("Fail to parse cfg-rdb-url")
 		} else if len(u.Path) < 2 {
-			zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "HmAgent:Main:Validatevar").Msg("path is not a redis array number")
+			zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "Shield:Main:Validatevar").Msg("path is not a redis array number")
 		} else {
 			_cfgRedisPassword, _ := u.User.Password()
 			_cfgRedisDb, _ := strconv.Atoi(u.Path[1:])
@@ -105,21 +108,23 @@ func init() {
 				Password: _cfgRedisPassword,
 				DB:       _cfgRedisDb,
 			}
-			_crdburl := _redisCfgSettings.String()
-			if crdburl == _crdburl {
+			_redisurl := _redisCfgSettings.String()
+			if redisurl == _redisurl {
 				config.RedisCfgSettings = _redisCfgSettings
 			} else {
-				zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "HmAgent:Main:Validatevar").Msgf("url mismatch between rebuilt(%v)", _crdburl)
+				zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "Shield:Main:Validatevar").Msgf("url mismatch with reversed(%v)", _redisurl)
 			}
 		}
 	}
 }
 
 func main() {
-	basesvc.Starter(config.RedisCfgSettings.IsNone())
-	if config.RedisCfgSettings.IsNone() {
-		zlog.Warn().Str("function", "HmAgent:Main").Msgf("No configuration database was declared!")
-		go basesvc.RdbServer.Start()
+	if !nohttp {
+		zlog.Warn().Str("function", "Shield:Main").Msgf("Listen command via HTTP server")
+		web.Server()
 	}
-	web.Server()
+	if !config.RedisCfgSettings.IsNone() {
+		zlog.Warn().Str("function", "Shield:Main").Msgf("Listen command via Redis Pub/Sub")
+		// go basesvc.RdbServer.Start()
+	}
 }
