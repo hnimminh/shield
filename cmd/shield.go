@@ -8,11 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/hnimminh/shield/blueprint"
-	"github.com/hnimminh/shield/config"
-	"github.com/hnimminh/shield/versions"
+	"github.com/hnimminh/shield/internal/blueprint"
+	"github.com/hnimminh/shield/internal/config"
+	"github.com/hnimminh/shield/pubsub"
 	"github.com/hnimminh/shield/web"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
@@ -21,8 +22,8 @@ import (
 var (
 	host     string
 	port     int
-	nohttp   bool
 	redisurl string
+	channel  string
 	debug    bool
 )
 
@@ -39,19 +40,20 @@ func init() {
 	|																|
     +---------------------------------------------------------------+
         Simple Daemon receiving/executing firewall config command
-        %sVersion v%s
+        v%s
     -----------------------------------------------------------------
     ` + "\n\n"
-	fmt.Printf(banner, versions.NAME, versions.VERSION)
+	fmt.Printf(banner, config.Version)
 
 	// -------------------------------------------------------------
 	flag.StringVar(&host, "host", "", "HTTP API binding IP address")
 	flag.StringVar(&host, "H", "", "HTTP API binding IP address")
 	flag.IntVar(&port, "port", 0, "HTTP API binding port")
 	flag.IntVar(&port, "P", 0, "HTTP API binding port")
-	flag.BoolVar(&nohttp, "nohttp", false, "Disable HTTP server")
 	flag.StringVar(&redisurl, "redisurl", "", "redis url, eg: tcp://username:password@10.10.10.10:6379/0")
 	flag.StringVar(&redisurl, "r", "", "redis url, eg: tcp://username:password@10.10.10.10:6379/0")
+	flag.StringVar(&channel, "channel", "", "redis channel for pubsub")
+	flag.StringVar(&channel, "c", "", "redis channel for pubsub")
 	flag.BoolVar(&debug, "debug", false, "sets log level to debug")
 	flag.BoolVar(&debug, "d", false, "sets log level to debug")
 	flag.Parse()
@@ -80,51 +82,69 @@ func init() {
 	//-------------------------------------------------------------
 	// http listen service
 	if host != "" {
+		zlog.Info().Str("function", "Shield:Main:Validatevar").Msgf("Overwrite host to %s", host)
 		config.HTTPListenIP = host
 	}
 	if port != 0 {
+		zlog.Info().Str("function", "Shield:Main:Validatevar").Msgf("Overwrite port to %d", port)
 		config.HTTPListenPort = port
 	}
 
 	// configuration redis setting
 	config.RedisCfgSettings = blueprint.RedisStruct{
-		Addr:     config.CfgRedisAddress,
-		Password: config.CfgRedisPassword,
-		DB:       config.CfgRedisDb,
+		Addr:     config.RedisAddress,
+		Password: config.RedisPassword,
+		DB:       config.RedisDb,
 	}
 	if redisurl != "" {
 		u, err := url.Parse(redisurl)
 		if err != nil {
-			zlog.Error().Err(err).Str("function", "Shield:Main:Validatevar").Msg("Fail to parse cfg-rdb-url")
+			zlog.Error().Err(err).Str("function", "Shield:Main:Validatevar").Msg("Fail to parse redis url")
 		} else if len(u.Path) < 2 {
-			zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "Shield:Main:Validatevar").Msg("path is not a redis array number")
+			zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "Shield:Main:Validatevar").Msg("Path is not a redis array number")
 		} else {
-			_cfgRedisPassword, _ := u.User.Password()
-			_cfgRedisDb, _ := strconv.Atoi(u.Path[1:])
+			_redisPassword, _ := u.User.Password()
+			_redisDb, _ := strconv.Atoi(u.Path[1:])
 			_redisCfgSettings := blueprint.RedisStruct{
 				Network:  u.Scheme,
 				Addr:     u.Host,
 				Username: u.User.Username(),
-				Password: _cfgRedisPassword,
-				DB:       _cfgRedisDb,
+				Password: _redisPassword,
+				DB:       _redisDb,
 			}
 			_redisurl := _redisCfgSettings.String()
 			if redisurl == _redisurl {
 				config.RedisCfgSettings = _redisCfgSettings
 			} else {
-				zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "Shield:Main:Validatevar").Msgf("url mismatch with reversed(%v)", _redisurl)
+				zlog.Error().Err(blueprint.ErrInvalidRedisUrl).Str("function", "Shield:Main:Validatevar").Msgf("URL mismatch with reversed(%v)", _redisurl)
 			}
 		}
+	}
+	// redis pubsub
+	if channel != "" {
+		zlog.Info().Str("function", "Shield:Main:Validatevar").Msgf("Overwrite pubsub channel name to %s", channel)
+		config.RedisPubsubChannel = channel
 	}
 }
 
 func main() {
-	if !nohttp {
-		zlog.Warn().Str("function", "Shield:Main").Msgf("Listen command via HTTP server")
-		web.Server()
+	if (config.HTTPListenIP == "" && config.HTTPListenPort == 0) || config.RedisCfgSettings.IsNone() {
+		zlog.Error().Str("function", "Shield:Main").Msgf("Use at least one of these method `API` or `PUBSUB`")
+		os.Exit(1)
 	}
+
+	wg := sync.WaitGroup{}
+	defer wg.Wait()
+
+	if config.HTTPListenIP != "" && config.HTTPListenPort != 0 {
+		zlog.Info().Str("function", "Shield:Main").Msgf("Listen command via HTTP API server")
+		wg.Add(1)
+		go web.Server(&wg)
+	}
+
 	if !config.RedisCfgSettings.IsNone() {
-		zlog.Warn().Str("function", "Shield:Main").Msgf("Listen command via Redis Pub/Sub")
-		// go basesvc.RdbServer.Start()
+		zlog.Info().Str("function", "Shield:Main").Msgf("Listen command via Redis Pub/Sub")
+		wg.Add(1)
+		go pubsub.Eventd(&wg)
 	}
 }

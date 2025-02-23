@@ -15,9 +15,10 @@ var (
 	LogLevel int8
 
 	// Configuration Redis
-	CfgRedisAddress  string
-	CfgRedisPassword string
-	CfgRedisDb       int
+	RedisAddress       string
+	RedisPassword      string
+	RedisDb            int
+	RedisPubsubChannel string
 )
 
 func init() {
@@ -26,16 +27,18 @@ func init() {
 		LogLevel = _level
 	}
 
+	// http api
 	HTTPListenIP = os.Getenv("HTTP_LISTEN_IP")
-	if HTTPListenIP == "" {
-		HTTPListenIP = DFT_API_HOST
-	}
 	HTTPListenPort, _ = strconv.Atoi(os.Getenv("HTTP_LISTEN_PORT"))
-	if HTTPListenPort == 0 {
-		HTTPListenPort = DFT_API_PORT
+
+	// redis address
+	RedisAddress = os.Getenv("REDIS_ADDR")
+	RedisPassword = os.Getenv("REDIS_PASSWORD")
+	RedisDb, _ = strconv.Atoi(os.Getenv("REDIS_DB"))
+	// redis pubsub channel
+	RedisPubsubChannel = os.Getenv("REDIS_PUBSUB_CHANNEL")
+	if RedisPubsubChannel == "" {
+		RedisPubsubChannel = "SECURITY_CHANNEL"
 	}
 
-	CfgRedisAddress = os.Getenv("CFG_REDIS_ADDR")
-	CfgRedisPassword = os.Getenv("CFG_REDIS_PASSWORD")
-	CfgRedisDb, _ = strconv.Atoi(os.Getenv("CFG_REDIS_DB"))
 }

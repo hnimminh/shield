@@ -1,12 +1,11 @@
 package config
 
 import (
-	"github.com/hnimminh/shield/blueprint"
+	"github.com/hnimminh/shield/internal/blueprint"
 )
 
 const (
-	DFT_API_HOST  = "0.0.0.0"
-	DFT_API_PORT  = 8088
+	Version       = "0.0.0-1"
 	DFT_LOG_LEVEL = 1
 )
 

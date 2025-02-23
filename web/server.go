@@ -3,9 +3,10 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
-	"github.com/hnimminh/shield/config"
+	"github.com/hnimminh/shield/internal/config"
 	"github.com/hnimminh/shield/web/api"
 	zlog "github.com/rs/zerolog/log"
 )
@@ -16,7 +17,7 @@ import (
 // @contact.name    Minh Minh
 // @contact.email   hnimminh@outlook.com
 // @BasePath
-func Server() {
+func Server(wg *sync.WaitGroup) {
 	router := mux.NewRouter()
 
 	// HEALTHCHECK
@@ -34,6 +35,8 @@ func Server() {
 	zlog.Info().Str("function", "Shield:Web:Server").Msgf("Worker - server is listen on %s", bindaddr)
 	err := http.ListenAndServe(bindaddr, router)
 	if err != nil {
-		zlog.Fatal().Err(err).Str("function", "Shield:Web:Server").Msg("Worker Server fail to start")
+		zlog.Error().Err(err).Str("function", "Shield:Web:Server").Msg("Worker Server fail to start")
 	}
+	// marking groutine finish
+	wg.Done()
 }
