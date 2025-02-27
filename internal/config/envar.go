@@ -14,6 +14,7 @@ var (
 	// application log level
 	LogLevel int8
 
+	NodeID string
 	// Configuration Redis
 	RedisAddress       string
 	RedisPassword      string
@@ -38,7 +39,8 @@ func init() {
 	// redis pubsub channel
 	RedisPubsubChannel = os.Getenv("REDIS_PUBSUB_CHANNEL")
 	if RedisPubsubChannel == "" {
-		RedisPubsubChannel = "SECURITY_CHANNEL"
+		RedisPubsubChannel = "FIREWALL_NFTCMD_CHANNEL"
 	}
 
+	NodeID = os.Getenv("NODEID")
 }

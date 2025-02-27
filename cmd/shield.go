@@ -24,6 +24,7 @@ var (
 	port     int
 	redisurl string
 	channel  string
+	nodeid   string
 	debug    bool
 )
 
@@ -32,16 +33,15 @@ func init() {
 	// startup banner with setting displayed
 	// -------------------------------------------------------------
 	banner := `
-    +---------------------------------------------------------------+
-	|	 __  __  __ __  ____ __    ____								|
-	|	(( \ ||  || || ||    ||    || \\							|
-	|	 \\  ||==|| || ||==  ||    ||  ))							|
-	|	\_)) ||  || || ||___ ||__| ||_//							|
-	|																|
-    +---------------------------------------------------------------+
+    *---------------------------------------------------------------*
+        __  __  __ __  ____ __    ____
+       (( \ ||  || || ||    ||    || \\
+        \\  ||==|| || ||==  ||    ||  ))
+       \_)) ||  || || ||___ ||__| ||_//
+
         Simple Daemon receiving/executing firewall config command
         v%s
-    -----------------------------------------------------------------
+    *---------------------------------------------------------------*
     ` + "\n\n"
 	fmt.Printf(banner, config.Version)
 
@@ -54,6 +54,8 @@ func init() {
 	flag.StringVar(&redisurl, "r", "", "redis url, eg: tcp://username:password@10.10.10.10:6379/0")
 	flag.StringVar(&channel, "channel", "", "redis channel for pubsub")
 	flag.StringVar(&channel, "c", "", "redis channel for pubsub")
+	flag.StringVar(&nodeid, "nodeid", "", "redis channel for pubsub")
+	flag.StringVar(&nodeid, "id", "", "redis channel for pubsub")
 	flag.BoolVar(&debug, "debug", false, "sets log level to debug")
 	flag.BoolVar(&debug, "d", false, "sets log level to debug")
 	flag.Parse()
@@ -125,11 +127,15 @@ func init() {
 		zlog.Info().Str("function", "Shield:Main:Validatevar").Msgf("Overwrite pubsub channel name to %s", channel)
 		config.RedisPubsubChannel = channel
 	}
+	if nodeid != "" {
+		zlog.Info().Str("function", "Shield:Main:Validatevar").Msgf("Overwrite nodeid to %s", nodeid)
+		config.NodeID = nodeid
+	}
 }
 
 func main() {
-	if (config.HTTPListenIP == "" && config.HTTPListenPort == 0) || config.RedisCfgSettings.IsNone() {
-		zlog.Error().Str("function", "Shield:Main").Msgf("Use at least one of these method `API` or `PUBSUB`")
+	if (config.HTTPListenIP == "" || config.HTTPListenPort == 0) && config.RedisCfgSettings.IsNone() {
+		zlog.Error().Str("function", "Shield:Main").Msgf("Use at least one of these method API or PUBSUB")
 		os.Exit(1)
 	}
 
