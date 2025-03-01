@@ -24,7 +24,7 @@
 env GOOS=linux GOARCH=amd64 go build -o shield cmd/shield.go
 env GOOS=darwin GOARCH=arm64 go build -o shield cmd/shield.go
 
-shield.go --redisurl tcp://:@127.0.0.1:6379/0
+shield --redisurl tcp://:@127.0.0.1:6379/0
 ```
 
 
