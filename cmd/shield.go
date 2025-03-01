@@ -26,6 +26,7 @@ var (
 	channel  string
 	nodeid   string
 	debug    bool
+	version  bool
 )
 
 func init() {
@@ -58,8 +59,14 @@ func init() {
 	flag.StringVar(&nodeid, "id", "", "redis channel for pubsub")
 	flag.BoolVar(&debug, "debug", false, "sets log level to debug")
 	flag.BoolVar(&debug, "d", false, "sets log level to debug")
+	flag.BoolVar(&version, "version", false, "show software version")
+	flag.BoolVar(&version, "v", false, "show software version")
 	flag.Parse()
 
+	// VERSION
+	if version {
+		os.Exit(0)
+	}
 	// -------------------------------------------------------------
 	// log setting
 	// -------------------------------------------------------------
