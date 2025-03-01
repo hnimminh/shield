@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	Version       = "0.0.0-1"
+	Version       = "0.0.1"
 	DFT_LOG_LEVEL = 1
 )
 
